@@ -1,7 +1,10 @@
-export default function Home() {
+import { PageHeader } from "@/components/shared/page-header";
+
+export default function DashboardPage() {
   return (
-    <main>
-      <div>Hello world!</div>
-    </main>
+    <PageHeader
+      title="Training dashboard"
+      description="Pick a property, underwrite it, and see how close your revenue forecast lands to the analyst's."
+    />
   );
 }

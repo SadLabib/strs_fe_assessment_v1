@@ -24,7 +24,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={cn(inter.variable, montserrat.variable)}>
-      <body className="flex min-h-dvh flex-col bg-muted antialiased">
+      {/* Browser extensions (ColorZilla, Grammarly…) add attributes to <body>
+          before React hydrates. This only silences attribute diffs on <body>. */}
+      <body
+        suppressHydrationWarning
+        className="flex min-h-dvh flex-col bg-muted antialiased"
+      >
         <AppHeader />
         <main
           id="main"

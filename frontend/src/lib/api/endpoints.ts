@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { z } from "zod";
 
 import { apiFetch } from "./client";
@@ -13,26 +14,30 @@ import {
   underwritingSchema,
 } from "./schemas";
 
-export function getDashboard() {
-  return apiFetch("/api/dashboard", dashboardSchema);
-}
+// Reads are wrapped in React `cache` so a page and its `generateMetadata` share
+// one request. Next's automatic fetch dedupe doesn't apply here because
+// `apiFetch` passes a timeout `signal`.
 
-export function getProperty(zpid: string) {
+export const getDashboard = cache(() => {
+  return apiFetch("/api/dashboard", dashboardSchema);
+});
+
+export const getProperty = cache((zpid: string) => {
   return apiFetch(
     `/api/properties/${encodeURIComponent(zpid)}`,
     propertySchema,
   );
-}
+});
 
-export function getMarket(id: number) {
+export const getMarket = cache((id: number) => {
   return apiFetch(`/api/markets/${id}`, marketSchema);
-}
+});
 
 /**
  * Trainee underwritings only. The API also serves the analyst's reference
  * (the answer key) by id, so references are treated as if they don't exist.
  */
-export async function getUnderwriting(id: number) {
+export const getUnderwriting = cache(async (id: number) => {
   const underwriting = await apiFetch(
     `/api/underwritings/${id}`,
     underwritingSchema,
@@ -44,7 +49,16 @@ export async function getUnderwriting(id: number) {
     );
   }
   return underwriting;
-}
+});
+
+export const listSubmissions = cache((zpid?: string) => {
+  const query = zpid ? `?zpid=${encodeURIComponent(zpid)}` : "";
+  return apiFetch(`/api/submissions${query}`, z.array(submissionSchema));
+});
+
+export const getSubmission = cache((id: number) => {
+  return apiFetch(`/api/submissions/${id}`, submissionSchema);
+});
 
 export function createUnderwriting(zpid: string) {
   return apiFetch("/api/underwritings", underwritingSchema, {
@@ -65,13 +79,4 @@ export function submitUnderwriting(id: number, payload: UnderwritingPayload) {
     method: "POST",
     body: payload,
   });
-}
-
-export function listSubmissions(zpid?: string) {
-  const query = zpid ? `?zpid=${encodeURIComponent(zpid)}` : "";
-  return apiFetch(`/api/submissions${query}`, z.array(submissionSchema));
-}
-
-export function getSubmission(id: number) {
-  return apiFetch(`/api/submissions/${id}`, submissionSchema);
 }

@@ -4,12 +4,12 @@ const STEPS = [
   {
     title: "What it costs up front",
     detail:
-      "Down payment, closing costs and setup spend add up to the Total Out of Pocket.",
+      "Down payment, closing costs and setup spend add up to the total out of pocket.",
   },
   {
     title: "What it earns each year",
     detail:
-      "Revenue minus running costs and the mortgage gives the Annual Free Cash Flow.",
+      "Revenue minus running costs and the mortgage gives the annual free cash flow.",
   },
   {
     title: "How good the return is",

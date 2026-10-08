@@ -50,8 +50,9 @@ export function DeviationScale({
       : `Your forecast was ${formatPercent(Math.abs(signed))} ${direction} the analyst's. Best is within ${thresholdLabel(bestThreshold)}, Medium within ${thresholdLabel(mediumThreshold)}.`;
 
   return (
-    <figure role="img" aria-label={summary} className="space-y-2">
-      <div aria-hidden className="relative pt-7 pb-6">
+    <figure className="space-y-2">
+      {/* One image for screen readers; the strip's parts are decorative. */}
+      <div role="img" aria-label={summary} className="relative pt-7 pb-6">
         <div className="relative h-3 overflow-hidden rounded-full">
           {zones.map((zone) => (
             <div

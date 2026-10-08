@@ -101,7 +101,9 @@ export function Returns() {
       </CardHeader>
       <CardContent className="space-y-5">
         {scenarios ? (
-          <Table>
+          // On phones: smaller type and wrapping labels keep all three
+          // scenarios in view instead of scrolling sideways.
+          <Table className="text-xs sm:text-sm">
             <TableCaption className="sr-only">
               Annual returns for each revenue scenario
             </TableCaption>
@@ -114,7 +116,7 @@ export function Returns() {
                   <TableHead
                     key={name}
                     scope="col"
-                    className="text-right capitalize"
+                    className="px-1.5 text-right capitalize sm:px-2"
                   >
                     {name}
                   </TableHead>
@@ -130,7 +132,7 @@ export function Returns() {
                   <TableHead
                     scope="row"
                     className={cn(
-                      "text-foreground",
+                      "px-1.5 whitespace-normal text-foreground sm:px-2",
                       row.emphasis ? "font-semibold" : "font-normal",
                     )}
                   >
@@ -151,7 +153,7 @@ export function Returns() {
                       <TableCell
                         key={name}
                         className={cn(
-                          "text-right tabular-nums",
+                          "px-1.5 text-right tabular-nums sm:px-2",
                           value != null &&
                             value < 0 &&
                             row.emphasis &&

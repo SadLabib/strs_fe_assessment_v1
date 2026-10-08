@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
+import { connection } from "next/server";
 
 import { AppHeader } from "@/components/shared/app-header";
 import { Toaster } from "@/components/ui/sonner";
@@ -21,7 +22,11 @@ export const metadata: Metadata = {
     "Practice underwriting short-term rentals and see how your revenue forecast compares with an analyst's.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Render every page per request, so each one gets the CSP nonce from
+  // proxy.ts (a page prerendered at build time would have none).
+  await connection();
+
   return (
     <html lang="en" className={cn(inter.variable, montserrat.variable)}>
       {/* Browser extensions (ColorZilla, Grammarly…) add attributes to <body>

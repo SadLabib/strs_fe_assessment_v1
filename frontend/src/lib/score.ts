@@ -29,3 +29,25 @@ export function describeDeviation({
   if (direction === "exact") return "matched the analyst exactly";
   return `${formatPercent(deviation)} ${direction} the analyst`;
 }
+
+/** The forecasts that would have scored Best and Medium (limits are inclusive). */
+export function scoreBands(
+  reference: number,
+  bestThreshold: number,
+  mediumThreshold: number,
+) {
+  return {
+    best: {
+      low: reference * (1 - bestThreshold),
+      high: reference * (1 + bestThreshold),
+    },
+    medium: {
+      low: reference * (1 - mediumThreshold),
+      high: reference * (1 + mediumThreshold),
+    },
+  };
+}
+
+/** 0.1 → "10%" (thresholds are whole percentages). */
+export const thresholdLabel = (threshold: number) =>
+  `${Math.round(threshold * 100)}%`;

@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { DEAL_TAGS } from "@/lib/domain";
 
-import { combineStatuses, sectionStatuses } from "./completeness";
+import {
+  combineStatuses,
+  reviewIssues,
+  reviewWarnings,
+  sectionStatuses,
+} from "./completeness";
 import { TAX_DEFAULTS, type FormValues } from "./schema";
 
 function values(overrides: Partial<FormValues> = {}): FormValues {
@@ -91,5 +96,48 @@ describe("combineStatuses", () => {
       "invalid",
     );
     expect(combineStatuses(["complete", "complete"])).toBe("complete");
+  });
+});
+
+describe("reviewIssues", () => {
+  it("points each problem at its field, and tells blank from wrong", () => {
+    const draft = values();
+    draft.purchase.termYears = "";
+    draft.purchase.interestRatePct = "120";
+    draft.optimizationItems = [{ category: "Lighting", amount: "" }];
+
+    expect(reviewIssues(draft)).toEqual([
+      {
+        section: "purchase",
+        path: "purchase.interestRatePct",
+        message: "Interest rate can't be more than 100%",
+        blank: false,
+      },
+      {
+        section: "purchase",
+        path: "purchase.termYears",
+        message: "Loan term is required",
+        blank: true,
+      },
+      {
+        section: "optimizationItems",
+        path: "optimizationItems.0.amount",
+        message: "Add an amount",
+        blank: true,
+      },
+    ]);
+  });
+
+  it("is empty for a draft that can be submitted", () => {
+    expect(reviewIssues(values())).toEqual([]);
+  });
+});
+
+describe("reviewWarnings", () => {
+  it("nudges about empty expense and setup lists without blocking", () => {
+    expect(reviewWarnings(values())).toEqual([]);
+    expect(
+      reviewWarnings(values({ operatingExpenses: [], optimizationItems: [] })),
+    ).toHaveLength(2);
   });
 });

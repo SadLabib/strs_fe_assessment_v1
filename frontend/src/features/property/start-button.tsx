@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, type ComponentProps } from "react";
 import { Loader2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,14 @@ import { startUnderwriting } from "./actions";
 type StartButtonProps = {
   zpid: string;
   label: string;
+  variant?: ComponentProps<typeof Button>["variant"];
 };
 
-export function StartButton({ zpid, label }: StartButtonProps) {
+export function StartButton({
+  zpid,
+  label,
+  variant = "cta",
+}: StartButtonProps) {
   const [state, formAction, isPending] = useActionState(
     startUnderwriting,
     null,
@@ -24,7 +29,7 @@ export function StartButton({ zpid, label }: StartButtonProps) {
       className="flex flex-col items-start gap-2 sm:items-end"
     >
       <input type="hidden" name="zpid" value={zpid} />
-      <Button type="submit" variant="cta" size="lg" disabled={isPending}>
+      <Button type="submit" variant={variant} size="lg" disabled={isPending}>
         {isPending && (
           <Loader2Icon
             className="animate-spin"

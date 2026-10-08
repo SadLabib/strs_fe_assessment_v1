@@ -2,14 +2,13 @@
 
 import { useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowRightIcon, SaveIcon } from "lucide-react";
 import {
-  ArrowRightIcon,
-  CircleAlertIcon,
-  CircleCheckIcon,
-  CircleDashedIcon,
-  SaveIcon,
-} from "lucide-react";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
+  FormProvider,
+  useForm,
+  useWatch,
+  type FieldPath,
+} from "react-hook-form";
 import type { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -19,12 +18,16 @@ import { AnalysisTab } from "./analysis-tab";
 import {
   combineStatuses,
   sectionStatuses,
+  SECTIONS,
+  type Section,
   type SectionStatus,
 } from "./completeness";
 import { DealTagsTab } from "./deal-tags-tab";
 import { FinancialsTab } from "./financials-tab";
+import { ReviewTab } from "./review-tab";
 import { SaveStatusIndicator } from "./save-status";
 import { formSchema, type FormValues } from "./schema";
+import { SectionStatusIcon } from "./section-status-icon";
 import { SummaryRail } from "./summary-rail";
 import { useAutosave } from "./use-autosave";
 
@@ -32,6 +35,7 @@ const TABS = [
   { value: "financials", label: "Financials" },
   { value: "analysis", label: "Analysis" },
   { value: "tags", label: "Deal tags" },
+  { value: "review", label: "Review" },
 ] as const;
 
 type TabValue = (typeof TABS)[number]["value"];
@@ -48,13 +52,30 @@ export function Workspace({ underwritingId, defaultValues }: WorkspaceProps) {
     // Errors appear once a field is left, then update as the trainee types.
     mode: "onTouched",
   });
-  const { status, save } = useAutosave(underwritingId, form);
+  const { status, confirmed, save, cancel } = useAutosave(underwritingId, form);
   const [tab, setTab] = useState<TabValue>("financials");
   const tabsRef = useRef<HTMLDivElement>(null);
 
-  function goTo(next: TabValue) {
+  function changeTab(next: TabValue) {
     setTab(next);
+    // Review shows the server's numbers, so make sure they're current.
+    if (next === "review") void save();
+  }
+
+  function goTo(next: TabValue) {
+    changeTab(next);
     tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /** From the review checklist: open the field's tab, show its error and focus it. */
+  function goToField(path: FieldPath<FormValues>) {
+    const section = path.split(".")[0] as Section;
+    setTab(SECTIONS[section].tab);
+    // The tab's fields mount on this render; focus them on the next frame.
+    requestAnimationFrame(() => {
+      void form.trigger(path);
+      form.setFocus(path, { shouldSelect: true });
+    });
   }
 
   return (
@@ -70,7 +91,7 @@ export function Workspace({ underwritingId, defaultValues }: WorkspaceProps) {
           <Tabs
             ref={tabsRef}
             value={tab}
-            onValueChange={(value) => setTab(value as TabValue)}
+            onValueChange={(value) => changeTab(value as TabValue)}
             className="scroll-mt-6 gap-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -106,8 +127,18 @@ export function Workspace({ underwritingId, defaultValues }: WorkspaceProps) {
                 onClick={() => goTo("tags")}
               />
             </TabsContent>
-            <TabsContent value="tags">
+            <TabsContent value="tags" className="space-y-6">
               <DealTagsTab />
+              <NextButton label="Next: Review" onClick={() => goTo("review")} />
+            </TabsContent>
+            <TabsContent value="review">
+              <ReviewTab
+                underwritingId={underwritingId}
+                confirmed={confirmed}
+                isSaving={status.state === "saving"}
+                onGoToField={goToField}
+                onBeforeSubmit={cancel}
+              />
             </TabsContent>
           </Tabs>
         </form>
@@ -117,27 +148,6 @@ export function Workspace({ underwritingId, defaultValues }: WorkspaceProps) {
     </FormProvider>
   );
 }
-
-const STATUS_ICONS: Record<
-  SectionStatus,
-  { Icon: typeof CircleCheckIcon; className: string; label: string }
-> = {
-  complete: {
-    Icon: CircleCheckIcon,
-    className: "text-success",
-    label: "complete",
-  },
-  incomplete: {
-    Icon: CircleDashedIcon,
-    className: "text-muted-foreground",
-    label: "incomplete",
-  },
-  invalid: {
-    Icon: CircleAlertIcon,
-    className: "text-danger",
-    label: "needs attention",
-  },
-};
 
 /** Its own component: it watches every value, so only the tab list re-renders. */
 function WorkspaceTabsList() {
@@ -159,19 +169,11 @@ function WorkspaceTabsList() {
     <TabsList>
       {TABS.map(({ value, label }) => {
         const status = statuses[value];
-        const icon = status && STATUS_ICONS[status];
         return (
           <TabsTrigger key={value} value={value}>
             {label}
-            {icon && (
-              <>
-                <icon.Icon
-                  data-icon="inline-end"
-                  className={icon.className}
-                  aria-hidden
-                />
-                <span className="sr-only">({icon.label})</span>
-              </>
+            {status && (
+              <SectionStatusIcon status={status} data-icon="inline-end" />
             )}
           </TabsTrigger>
         );

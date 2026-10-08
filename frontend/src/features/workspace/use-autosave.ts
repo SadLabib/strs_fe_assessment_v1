@@ -6,13 +6,21 @@ import type { UseFormReturn } from "react-hook-form";
 import { saveDraft, type SaveResult } from "./actions";
 import type { PayloadSection } from "./mappers";
 import type { FormValues } from "./schema";
+import type { ServerSummary } from "./server-summary";
 
 export type SaveStatus =
   | { state: "idle" }
   | { state: "pending" }
   | { state: "saving" }
-  | { state: "saved"; at: Date; skipped: PayloadSection[] }
+  | { state: "saved"; at: Date }
   | { state: "error"; message: string };
+
+/** What the server confirmed on the last successful save. */
+export type Confirmed = {
+  at: Date;
+  summary: ServerSummary | null;
+  skipped: PayloadSection[];
+};
 
 const DEBOUNCE_MS = 1_000;
 
@@ -28,6 +36,7 @@ export function useAutosave(
   form: Pick<UseFormReturn<FormValues>, "watch" | "getValues">,
 ) {
   const [status, setStatus] = useState<SaveStatus>({ state: "idle" });
+  const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const inFlight = useRef(false);
   const queued = useRef(false);
@@ -60,9 +69,11 @@ export function useAutosave(
       }
 
       if (result.ok) {
-        setStatus({
-          state: "saved",
-          at: new Date(result.savedAt),
+        const at = new Date(result.savedAt);
+        setStatus({ state: "saved", at });
+        setConfirmed({
+          at,
+          summary: result.confirmed,
           skipped: result.skipped,
         });
       } else {
@@ -72,6 +83,13 @@ export function useAutosave(
     } while (queued.current);
     inFlight.current = false;
   }, [form, underwritingId]);
+
+  /** Stop pending saves, e.g. right before submitting (submit sends everything). */
+  const cancel = useCallback(() => {
+    clearTimeout(timer.current);
+    queued.current = false;
+    unsaved.current = false;
+  }, []);
 
   // Debounce: every change restarts the timer.
   useEffect(() => {
@@ -101,5 +119,5 @@ export function useAutosave(
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
 
-  return { status, save };
+  return { status, confirmed, save, cancel };
 }

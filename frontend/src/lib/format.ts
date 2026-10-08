@@ -42,6 +42,15 @@ export function formatCurrency(value: number | null | undefined) {
   return withMinusSign(currencyFormat.format(value));
 }
 
+/** For narrow spaces: 102800 → "$102.8k", -4210 → "−$4.2k", 950 → "$950". */
+export function formatCompactCurrency(value: number | null | undefined) {
+  if (value == null) return EMPTY;
+  const sign = value < 0 ? "−" : "";
+  const abs = Math.abs(value);
+  if (abs < 1_000) return `${sign}$${Math.round(abs)}`;
+  return `${sign}$${(abs / 1_000).toFixed(1)}k`;
+}
+
 /** 2150 → "2,150", 5.5 → "5.5". */
 export function formatNumber(value: number | null | undefined) {
   if (value == null) return EMPTY;

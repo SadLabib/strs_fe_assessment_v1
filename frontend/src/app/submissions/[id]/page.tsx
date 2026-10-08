@@ -81,7 +81,7 @@ export default async function SubmissionPage({
         description={`Attempt ${current?.attempt ?? 1} · submitted ${formatDateTime(submission.submitted_at)}`}
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <ScoreHero submission={submission} />
         <div className="space-y-6">
           <Leaderboard entries={entries} current={current} />

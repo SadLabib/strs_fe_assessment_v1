@@ -97,7 +97,7 @@ export default async function PropertyPage({
         }
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <PropertyBrief property={property} />
         <div className="space-y-6">
           {market && <MarketCard market={market} />}

@@ -80,7 +80,7 @@ export function Workspace({ underwritingId, defaultValues }: WorkspaceProps) {
 
   return (
     <FormProvider {...form}>
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <form
           noValidate
           onSubmit={(event) => {

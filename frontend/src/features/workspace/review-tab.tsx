@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { unstable_rethrow } from "next/navigation";
 import { Loader2Icon, TriangleAlertIcon } from "lucide-react";
 import { useFormContext, useWatch, type FieldPath } from "react-hook-form";
 
@@ -388,9 +389,17 @@ function SubmitPanel({
     setError(null);
     onBeforeSubmit();
     startTransition(async () => {
-      // On success the action redirects to the results page.
-      const result = await submitDraft(underwritingId, getValues());
-      if (result && !result.ok) setError(result.error);
+      try {
+        const result = await submitDraft(underwritingId, getValues());
+        if (result && !result.ok) setError(result.error);
+      } catch (error) {
+        // Success redirects to the results page, and Next delivers that
+        // redirect as a thrown error: let it through.
+        unstable_rethrow(error);
+        setError(
+          "Couldn't reach the server. Check your connection, then submit again.",
+        );
+      }
     });
   }
 

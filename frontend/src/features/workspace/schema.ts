@@ -2,6 +2,10 @@ import { z } from "zod";
 
 import { DEAL_TAGS, type DealTag } from "@/lib/domain";
 
+// Zod tests `new Function()` to speed up parsing. The CSP (proxy.ts) blocks
+// eval, so skip the test instead of logging a violation in the browser.
+z.config({ jitless: true });
+
 // Inputs hold text, so the form keeps strings. These schemas validate that
 // text and convert it to numbers. Percentages are whole numbers here (20 =
 // 20%); mappers.ts converts them to the API's fractions.

@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* No dark mode: `dark:` utilities only apply under a `.dark` ancestor, which we never set. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-montserrat);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-cta: var(--cta);
+  --color-cta-foreground: var(--cta-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * STR Search brand palette (from strsearch.com): forest green #0A4B39,
+ * amber #E9A753, charcoal #3D3D3D. Text/background pairs meet WCAG AA.
+ */
+:root {
+  --background: #ffffff;
+  --foreground: #3d3d3d;
+  --card: #ffffff;
+  --card-foreground: #3d3d3d;
+  --popover: #ffffff;
+  --popover-foreground: #3d3d3d;
+
+  --primary: #0a4b39;
+  --primary-foreground: #ffffff;
+  /* 10% brand-green tint, so it stays visible on the #f8f8f8 page background. */
+  --secondary: #e7edeb;
+  --secondary-foreground: #0a4b39;
+  /* shadcn uses `accent` for hover backgrounds, not for brand accents. */
+  --accent: #f3f6f5;
+  --accent-foreground: #0a4b39;
+  --muted: #f8f8f8;
+  --muted-foreground: #666666;
+
+  --destructive: #b42318;
+  --border: #e6e6e6;
+  --input: #a6a6a6;
+  --ring: #0a4b39;
+  --radius: 0.625rem;
+
+  /* One primary call-to-action per screen. Dark text on amber: 4.9:1. */
+  --cta: #e9a753;
+  --cta-foreground: #ffffff;
+
+  /* Score bands: Best / Medium / Low. Kept distinct from the brand colors. */
+  --success: #067647;
+  --success-soft: #ecfdf3;
+  --warning: #b54708;
+  --warning-soft: #fffaeb;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

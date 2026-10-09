@@ -56,10 +56,7 @@ export function Revenue() {
             label={
               <>
                 Mid
-                <Badge
-                  variant="outline"
-                  className="border-cta text-cta-foreground"
-                >
+                <Badge variant="outline" className="border-cta text-foreground">
                   Graded
                 </Badge>
               </>

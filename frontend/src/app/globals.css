@@ -77,7 +77,7 @@
 
   /* One primary call-to-action per screen. Dark text on amber: 4.9:1. */
   --cta: #e9a753;
-  --cta-foreground: #0a4b39;
+  --cta-foreground: #ffffff;
 
   /* Score bands: Best / Medium / Low. Kept distinct from the brand colors. */
   --success: #067647;

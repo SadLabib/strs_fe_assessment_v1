@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { SCENARIOS } from "@/lib/domain";
+import { SCENARIOS, type Scenario } from "@/lib/domain";
 import {
   EMPTY,
   formatCompactCurrency,
@@ -97,60 +97,71 @@ export function SummaryRail() {
 
           <Step number={2} title="What it earns each year">
             {scenarios ? (
-              <table className="w-full text-sm tabular-nums">
-                <caption className="sr-only">
-                  Net operating income and free cash flow
-                </caption>
-                <thead>
-                  <tr className="text-xs text-muted-foreground">
-                    <th scope="col" className="text-left font-normal">
-                      <span className="sr-only">Line</span>
-                    </th>
-                    {SCENARIOS.map((name) => (
-                      <th
-                        key={name}
-                        scope="col"
-                        className="text-right font-normal capitalize"
-                      >
-                        {name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row" className="text-left font-normal">
-                      NOI
-                    </th>
-                    {SCENARIOS.map((name) => (
-                      <td key={name} className="text-right">
-                        {formatCompactCurrency(
-                          scenarios[name].netOperatingIncome,
+              // Labels sit above the numbers, so the three columns get the
+              // full width and line up with the Cash-on-Cash tiles below.
+              <div className="space-y-3">
+                <div
+                  aria-hidden
+                  className="grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground capitalize"
+                >
+                  {SCENARIOS.map((name) => (
+                    <span key={name}>{name}</span>
+                  ))}
+                </div>
+                <dl className="space-y-3">
+                  {[
+                    {
+                      label: "Net operating income",
+                      strong: false,
+                      value: (name: Scenario) =>
+                        scenarios[name].netOperatingIncome,
+                    },
+                    {
+                      label: "Free cash flow",
+                      strong: true,
+                      value: (name: Scenario) => scenarios[name].freeCashFlow,
+                    },
+                  ].map((row) => (
+                    <div key={row.label} className="space-y-1">
+                      <dt
+                        className={cn(
+                          "text-xs",
+                          row.strong
+                            ? "font-semibold text-foreground"
+                            : "text-muted-foreground",
                         )}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="font-semibold">
-                    <th scope="row" className="text-left font-semibold">
-                      Free cash flow
-                    </th>
-                    {SCENARIOS.map((name) => {
-                      const value = scenarios[name].freeCashFlow;
-                      return (
-                        <td
-                          key={name}
-                          className={cn(
-                            "text-right",
-                            value != null && value < 0 && "text-destructive",
-                          )}
-                        >
-                          {value == null ? EMPTY : formatCompactCurrency(value)}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </tbody>
-              </table>
+                      >
+                        {row.label}
+                      </dt>
+                      <dd
+                        className={cn(
+                          "grid grid-cols-3 gap-2 text-center text-sm tabular-nums",
+                          row.strong && "font-semibold",
+                        )}
+                      >
+                        {SCENARIOS.map((name) => {
+                          const value = row.value(name);
+                          return (
+                            <span
+                              key={name}
+                              className={cn(
+                                value != null &&
+                                  value < 0 &&
+                                  "text-destructive",
+                              )}
+                            >
+                              <span className="sr-only">{name}: </span>
+                              {value == null
+                                ? EMPTY
+                                : formatCompactCurrency(value)}
+                            </span>
+                          );
+                        })}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
             ) : (
               <Hint>
                 Add the Low, Mid and High revenue forecasts to see this.

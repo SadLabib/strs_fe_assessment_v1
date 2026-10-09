@@ -45,7 +45,7 @@ Copy `frontend/.env.example` to `frontend/.env.local` to change it. The value is
 | `npm run dev`             | Development server on :3000                                |
 | `npm run build` / `start` | Production build and server                                |
 | `npm run lint`            | ESLint (Next.js rules, React hooks, accessibility)         |
-| `npm run typecheck`       | TypeScript, no emit                                        |
+| `npm run typecheck`       | Generates Next.js route types, then TypeScript (no emit)   |
 | `npm run format:check`    | Prettier (with Tailwind class sorting)                     |
 | `npm run test`            | Unit tests (Vitest)                                        |
 | `npm run test:e2e`        | End-to-end tests (Playwright), fully unattended, see below |

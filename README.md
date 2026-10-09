@@ -127,7 +127,7 @@ A deliberately broken case (40% above the reference, expected to be Best) looks 
 - **The browser never talks to the API.** Pages read through Server Components; writes go through Server Actions. The API's address, the analyst's reference underwritings and raw error details stay on the server.
 - **Zod at both boundaries.** Every API response is parsed (`src/lib/api/schemas.ts`), so decimals that arrive as strings become numbers in one place. Every Server Action re-validates its input, because Server Actions are public endpoints.
 - **One place converts units.** The API uses fractions (`0.2`); the form uses whole percentages (`20`). `src/features/workspace/mappers.ts` converts both ways using strings, so `7` never becomes `0.07000000000000001`.
-- **Security headers and a nonce-based Content-Security-Policy** (`next.config.ts`, `src/proxy.ts`).
+- **Security and performance** have their own sections below.
 
 ```
 frontend/src/
@@ -144,6 +144,27 @@ frontend/src/
   lib/                  formatting, scoring, leaderboard ranking, routes
 frontend/e2e/           Playwright: fixtures, page objects, specs
 ```
+
+## Security
+
+- **The API is never exposed to the browser.** Pages fetch on the server (Server Components) and every write is a Server Action. `API_BASE_URL` is read on the server only, validated, and never prefixed `NEXT_PUBLIC_`. The modules that call the API are marked `server-only`, so importing them into browser code fails the build.
+- **The analyst's answers stay hidden.** The API returns a reference underwriting to anyone who knows its id. The server refuses any underwriting flagged `is_reference` and shows the 404 page instead.
+- **Everything is validated twice.** Zod parses every API response. Every Server Action re-validates its input, with size limits (50 rows per list, 80 characters per text field), because Server Actions are public endpoints. Next.js itself rejects Server Action calls from other origins.
+- **Rules live on the server, not in the UI.** A submitted attempt can't be saved or submitted again, even though the API would allow it. Start reuses an open draft, so double clicks can't create duplicates.
+- **Content-Security-Policy with a fresh nonce on every request** (`src/proxy.ts`): only scripts carrying that response's nonce can run (`'strict-dynamic'`), plus `object-src 'none'`, `base-uri 'self'`, `form-action 'self'` and `frame-ancestors 'none'`.
+- **Security headers** (`next.config.ts`): `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, a `Permissions-Policy` that turns off camera, microphone and geolocation, and no `X-Powered-By`.
+- **External content is restricted.** Listing links must be https and open with `noopener noreferrer`. Images load only from the allowed photo host, through Next's image optimizer, with at most one redirect.
+- **Failures don't leak details.** Every API call has an 8-second timeout. Users see a plain message; the details go to the server log only.
+- **Dependencies:** `npm audit --omit=dev` finds no vulnerabilities in what ships. No `dangerouslySetInnerHTML`, and no `.env` file is committed.
+
+## Performance
+
+- **Less JavaScript in the browser.** Pages are Server Components, so the browser receives ready-made HTML, and component code is sent only for the interactive parts (the workspace form, buttons, dialogs).
+- **Data loads in parallel.** The property, workspace and results pages fetch their data with `Promise.all`, and React `cache()` makes repeated calls in one request (the page and its title) share a single fetch.
+- **Something shows immediately.** Each route has a loading skeleton that streams in while its data loads.
+- **Typing stays fast.** React Hook Form keeps inputs uncontrolled, so a keystroke doesn't re-render the whole form. The summary rail watches the form on its own (`useWatch`) and recalculates with a memoized pure function, in the browser, with no server round trip per keystroke.
+- **Few, small requests.** Autosave waits a second after typing stops, sends one request at a time (changes made meanwhile go in one follow-up), and only sends complete sections.
+- **Assets are optimized.** Listing photos are resized per screen size with `next/image` (`sizes`), fonts are self-hosted through `next/font` (no request to Google from the browser), and there's no chart library: the deviation scale is plain CSS.
 
 ## Decisions and trade-offs
 

@@ -69,6 +69,22 @@ export type CalcResult = {
   prr: number | null;
 };
 
+/**
+ * Rounds half away from zero, like the API's Decimal ROUND_HALF_UP. The tiny
+ * nudge absorbs float error on exact halves (1.005 × 100 is 100.4999…).
+ */
+function roundHalfUp(value: number, places: number) {
+  const factor = 10 ** places;
+  const rounded = Math.round(Math.abs(value) * factor * (1 + 1e-12)) / factor;
+  return value < 0 && rounded !== 0 ? -rounded : rounded;
+}
+
+// The API rounds its outputs (money to cents, fractions to 4 places) and the
+// preview must show the same digits: 98,000 ÷ 540,000 is 0.18148…, which the
+// API stores as 0.1815, so both have to read 18.2%, not 18.1% and 18.2%.
+export const roundMoney = (value: number) => roundHalfUp(value, 2);
+export const roundFraction = (value: number) => roundHalfUp(value, 4);
+
 /** Low and High nudge operating expenses slightly. */
 export const OPEX_MULTIPLIERS: Record<Scenario, number> = {
   low: 0.96,
@@ -94,9 +110,13 @@ export function calculateFinancing(
   purchase: PurchaseInput,
   optimizationTotal: number,
 ): Financing {
-  const downPayment = purchase.price * (purchase.downPaymentPct / 100);
-  const loanAmount = purchase.price * (1 - purchase.downPaymentPct / 100);
-  const closingCosts = purchase.price * (purchase.closingCostsPct / 100);
+  const exactDownPayment = purchase.price * (purchase.downPaymentPct / 100);
+  // As in the API, these three are rounded to cents before anything uses them.
+  const downPayment = roundMoney(exactDownPayment);
+  const loanAmount = roundMoney(purchase.price - exactDownPayment);
+  const closingCosts = roundMoney(
+    purchase.price * (purchase.closingCostsPct / 100),
+  );
   const payment = monthlyPayment(
     loanAmount,
     purchase.interestRatePct,
@@ -108,8 +128,10 @@ export function calculateFinancing(
     loanAmount,
     closingCosts,
     monthlyPayment: payment,
-    annualDebtService: payment * 12,
-    totalOutOfPocket: downPayment + closingCosts + optimizationTotal,
+    annualDebtService: roundMoney(payment * 12),
+    totalOutOfPocket: roundMoney(
+      downPayment + closingCosts + optimizationTotal,
+    ),
   };
 }
 
@@ -125,10 +147,10 @@ export function calculateTaxes(
   const yearOneDepreciation = shortLifeAssets * (taxes.bonusPct / 100);
 
   return {
-    improvementBasis,
-    shortLifeAssets,
-    yearOneDepreciation,
-    taxSavings: yearOneDepreciation * (taxes.taxRatePct / 100),
+    improvementBasis: roundMoney(improvementBasis),
+    shortLifeAssets: roundMoney(shortLifeAssets),
+    yearOneDepreciation: roundMoney(yearOneDepreciation),
+    taxSavings: roundMoney(yearOneDepreciation * (taxes.taxRatePct / 100)),
   };
 }
 
@@ -142,20 +164,21 @@ function calculateScenario(
   const operatingExpenses = monthlyOpex * 12 * OPEX_MULTIPLIERS[scenario];
   const coHostingFee = forecast * (revenue.coHostingFeePct / 100);
   const netOperatingIncome = forecast - operatingExpenses - coHostingFee;
+  // Unrounded debt service, like the API: only the outputs get rounded.
   const freeCashFlow = financing
-    ? netOperatingIncome - financing.annualDebtService
+    ? netOperatingIncome - financing.monthlyPayment * 12
     : null;
   const cashOnCash =
     financing && freeCashFlow != null && financing.totalOutOfPocket > 0
-      ? freeCashFlow / financing.totalOutOfPocket
+      ? roundFraction(freeCashFlow / financing.totalOutOfPocket)
       : null;
 
   return {
-    revenue: forecast,
-    operatingExpenses,
-    coHostingFee,
-    netOperatingIncome,
-    freeCashFlow,
+    revenue: roundMoney(forecast),
+    operatingExpenses: roundMoney(operatingExpenses),
+    coHostingFee: roundMoney(coHostingFee),
+    netOperatingIncome: roundMoney(netOperatingIncome),
+    freeCashFlow: freeCashFlow == null ? null : roundMoney(freeCashFlow),
     cashOnCash,
   };
 }
@@ -189,6 +212,9 @@ export function calculate(input: CalcInput): CalcResult {
     financing,
     taxes,
     scenarios,
-    prr: input.purchase && revenue ? revenue.mid / input.purchase.price : null,
+    prr:
+      input.purchase && revenue
+        ? roundFraction(roundMoney(revenue.mid) / input.purchase.price)
+        : null,
   };
 }
